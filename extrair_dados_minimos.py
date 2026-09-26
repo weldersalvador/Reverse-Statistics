@@ -37,16 +37,16 @@ PROPERTY_FILES = {
 }
 
 # Chute inicial da calibração (a ordem define a ordem do vetor de parâmetros)
-INITIAL_GUESS = {"a_exp": 1.7, "b_exp": 1.7, "kra_max": 0.5, "krb_max": 0.5}
+INITIAL_GUESS = {"a_exp": 1.90, "b_exp": 1.90, "kra_max": 0.90, "krb_max": 0.90}
 PARAM_NAMES = list(INITIAL_GUESS.keys())
 
 # Limites, na mesma ordem de PARAM_NAMES
-#LOWER_BOUNDS = [1, 1, 0.01, 0.01]
-#UPPER_BOUNDS = [6, 6, 1, 1]
+LOWER_BOUNDS = [1, 1, 0.01, 0.01]
+UPPER_BOUNDS = [6, 6, 3, 3]
 
-BOUNDS = [[1,6],[1,6],[0.01,1],[0.01,1]]
+BOUNDS = [[1,6],[1,6],[0.01,3],[0.01,3]]
 
-DIFF_STEP = [0.5, 0.5, 0.08, 0.08]
+DIFF_STEP = [0.001, 0.001, 0.001, 0.001]
 
 MAX_NFEV = 500
 
@@ -308,7 +308,7 @@ def residuals(param_vector, times_exp, p_exp):
 
     delta_p_mod = p_mod[0, :] - p_mod[-1, :]
 
-    res = (p_exp - delta_p_mod[: , 1]) / delta_p_mod[: , 1]
+    res = (p_exp - delta_p_mod)
 
     params_str = ", ".join(f"{n}={v}" for n, v in zip(PARAM_NAMES, param_vector))
     print(f"[avaliação {_run_counter - 1}] {params_str} | soma dos quadrados = {np.sum(res ** 2):.6g}")
@@ -343,7 +343,7 @@ def load_experimental_data(file_path):
     print("=" * 60)
     print(f"Dados experimentais carregados de: {file_path}")
     print(f"Pontos: {n} -> tempo de 0 s a {times_exp[-1]:.6g} s "
-          f"(passo uniforme de {T_FINAL_EXP / (n - 1):.6g} s)")
+          f"(passo uniforme de {T_FINAL_EXP / (n):.6g} s)")
     print("=" * 60)
 
     return times_exp, p_target
@@ -368,19 +368,21 @@ def main():
 
     times_exp, p_exp = load_experimental_data(EXP_FILE)
 
-    result = minimize(
+    result = least_squares(
         residuals,
         x0=x0,
-        bounds=(BOUNDS),
+        bounds=(LOWER_BOUNDS,UPPER_BOUNDS),
         args=(times_exp, p_exp),
-        options = {"maxiter": MAX_NFEV}
+        max_nfev= MAX_NFEV,
+        diff_step= DIFF_STEP,
+        xtol = 1e-12
     )
 
     print("\n" + "=" * 60)
     print("CALIBRAÇÃO FINALIZADA")
     print(f"Status: {result.status} - {result.message}")
     print(f"Avaliações da função: {result.nfev}")
-    print(f"Custo final (norma dos resíduos): {result.fun:.6g}")
+    print(f"Custo final: {result.cost}")
     for name, v in zip(PARAM_NAMES, result.x):
         print(f"  {name} = {v:.6g}")
     print("=" * 60)
