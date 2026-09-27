@@ -67,7 +67,6 @@ SAT_EXP_FILE = "Sw_exp.csv"
 # tempo (s) do último índice de tempo do Sw_exp.csv
 T_FINAL_SAT_EXP = 150.0   
 
-# !!! VOCÊ PRECISA PREENCHER ISTO !!!
 # Comprimento real do domínio experimental em x (o "T_FINAL_EXP" da posição).
 X_TOTAL_EXP = 0.051 
 
@@ -75,7 +74,7 @@ X_TOTAL_EXP = 0.051
 # Comece com 1.0/1.0 e ajuste depois de olhar a magnitude de cada SSQ
 # separadamente (ver print de diagnóstico dentro de residuals_combined).
 WEIGHT_PRESSURE = 1.0
-WEIGHT_SATURATION = 1.0
+WEIGHT_SATURATION = 0.1
 
 OUTPUT_ROOT = "parametric_runs"
 RESULTS_DIR = "results"
