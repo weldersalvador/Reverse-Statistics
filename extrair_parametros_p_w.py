@@ -74,7 +74,7 @@ X_TOTAL_EXP = 0.051
 # Comece com 1.0/1.0 e ajuste depois de olhar a magnitude de cada SSQ
 # separadamente (ver print de diagnóstico dentro de residuals_combined).
 WEIGHT_PRESSURE = 1.0
-WEIGHT_SATURATION = 0.1
+WEIGHT_SATURATION = 0.5
 
 OUTPUT_ROOT = "parametric_runs"
 RESULTS_DIR = "results"
@@ -83,13 +83,8 @@ RESULT_FILE = "calibration_result.csv"
 
 KEEP_RUN_DIRS = False
 
-# Resíduo devolvido quando uma simulação falha (grande, mas finito)
 PENALTY_RESIDUAL = 1e3
 
-
-# ---------------------------------------------------------------
-# FUNÇÕES — infraestrutura (iguais ao script original)
-# ---------------------------------------------------------------
 
 def edit_property(case_dir, rel_path, prop_name, new_value):
     """Troca só o número de uma propriedade num dicionário do OpenFOAM."""
