@@ -37,7 +37,7 @@ PROPERTY_FILES = {
 }
 
 # Chute inicial da calibração (a ordem define a ordem do vetor de parâmetros)
-INITIAL_GUESS = {"a_exp": 1.90, "b_exp": 1.90, "kra_max": 0.90, "krb_max": 0.90}
+INITIAL_GUESS = {"a_exp": 1.50, "b_exp": 1.50, "kra_max": 0.50, "krb_max": 0.50}
 PARAM_NAMES = list(INITIAL_GUESS.keys())
 
 # Limites, na mesma ordem de PARAM_NAMES
@@ -46,7 +46,7 @@ UPPER_BOUNDS = [6, 6, 3, 3]
 
 BOUNDS = [[1,6],[1,6],[0.01,3],[0.01,3]]
 
-DIFF_STEP = [0.05, 0.05, 0.05, 0.05]
+DIFF_STEP = [0.001, 0.001, 0.001, 0.001]
 
 MAX_NFEV = 500
 
@@ -59,7 +59,7 @@ RUN_COMMANDS = [
 # Devem bater com system/controlDict
 SAMPLE_FUNCTION_NAME = "minhaAmostra"
 SET_NAME = "linha1"
-FIELDS = ["p"]
+FIELDS = ["p", "Sb"]
 
 # Dados experimentais
 EXP_FILE = "delta_p_exp.csv"
@@ -368,14 +368,12 @@ def main():
 
     times_exp, p_exp = load_experimental_data(EXP_FILE)
 
-    result = least_squares(
+    result = minimize(
         residuals,
         x0=x0,
-        bounds=(LOWER_BOUNDS,UPPER_BOUNDS),
+        bounds= BOUNDS,
         args=(times_exp, p_exp),
-        max_nfev= MAX_NFEV,
-        diff_step= DIFF_STEP,
-        xtol = 1e-12
+        options = {"maxiter": 500}
     )
 
     print("\n" + "=" * 60)
