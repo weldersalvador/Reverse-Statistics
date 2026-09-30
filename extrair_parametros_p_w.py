@@ -37,13 +37,13 @@ PROPERTY_FILES = {
     "krb_max": "constant/transportProperties",
 }
 
-INITIAL_GUESS = {"a_exp": 1.90, "b_exp": 1.90, "kra_max": 0.90, "krb_max": 0.90}
+INITIAL_GUESS = {"a_exp": 1.50, "b_exp": 1.50, "kra_max": 0.50, "krb_max": 0.50}
 PARAM_NAMES = list(INITIAL_GUESS.keys())
 
 LOWER_BOUNDS = [1, 1, 0.01, 0.01]
 UPPER_BOUNDS = [6, 6, 3, 3]
 
-DIFF_STEP = [0.05, 0.05, 0.05, 0.05]
+DIFF_STEP = [0.001, 0.001, 0.001, 0.001]
 
 MAX_NFEV = 500
 
@@ -71,10 +71,8 @@ T_FINAL_SAT_EXP = 150.0
 X_TOTAL_EXP = 0.051 
 
 # Pesos relativos entre os dois blocos de resíduos (pressão vs. saturação).
-# Comece com 1.0/1.0 e ajuste depois de olhar a magnitude de cada SSQ
-# separadamente (ver print de diagnóstico dentro de residuals_combined).
 WEIGHT_PRESSURE = 1.0
-WEIGHT_SATURATION = 0.5
+WEIGHT_SATURATION = 0.1
 
 OUTPUT_ROOT = "parametric_runs"
 RESULTS_DIR = "results"
@@ -399,10 +397,7 @@ def _relative_residual(exp, mod_interp):
     """Resíduo relativo com piso no denominador."""
     exp = np.asarray(exp, dtype=float)
     mod_interp = np.asarray(mod_interp, dtype=float)
-    ref = np.max(np.abs(exp))
-    piso = 1e-2 * ref if ref > 0 else 1.0
-    denom = np.maximum(np.abs(exp), piso)
-    return (exp - mod_interp) / denom
+    return (exp - mod_interp) / np.abs(exp)
 
 
 def residuals_combined(param_vector, times_exp_p, p_exp, x_exp_sat, t_exp_sat, S_exp):
@@ -430,22 +425,14 @@ def residuals_combined(param_vector, times_exp_p, p_exp, x_exp_sat, t_exp_sat, S
 
     t_mod_full = np.asarray(t_mod, dtype=float)
 
-    try:
-        interp_S = RegularGridInterpolator(
-            (x_mod_sorted, t_mod_full), S_mod_sorted,
-            bounds_error=False, fill_value=None,
-        )
-    except ValueError as e:
-        print(f"  saturação: grade inválida para interpolação ({e}) -> penalidade")
-        return penalty
+    interp_S = RegularGridInterpolator(
+        (x_mod_sorted, t_mod_full), S_mod_sorted,
+        bounds_error=False, fill_value=None,
+    )
 
     Xg, Tg = np.meshgrid(x_exp_sat, t_exp_sat, indexing="ij")   # (n_x, n_t)
     pontos = np.column_stack([Xg.ravel(), Tg.ravel()])
     S_mod_interp = interp_S(pontos).reshape(S_exp.shape)
-
-    if not np.all(np.isfinite(S_mod_interp)):
-        print("  saturação: interpolação não finita -> penalidade")
-        return penalty
 
     res_sat = _relative_residual(S_exp.ravel(), S_mod_interp.ravel())
 
@@ -493,8 +480,8 @@ def main():
         bounds=(LOWER_BOUNDS, UPPER_BOUNDS),
         args=(times_exp, p_exp, x_exp_sat, t_exp_sat, S_exp),
         max_nfev=MAX_NFEV,
-        diff_step=DIFF_STEP,
-        xtol=1e-12,
+        diff_step= DIFF_STEP,
+        xtol=1e-8,
     )
 
     print("\n" + "=" * 60)
